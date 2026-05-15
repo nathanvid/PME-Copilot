@@ -9,6 +9,7 @@ export async function GET(): Promise<NextResponse> {
       status: 'ok',
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version ?? 'unknown',
+      responseTimeMs: duration,
     },
     {
       status: 200,
