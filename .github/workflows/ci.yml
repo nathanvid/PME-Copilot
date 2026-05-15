@@ -101,7 +101,7 @@ jobs:
       - name: Check /api/health
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            pme-copilot-lyv3xj4do-arcadia24s-projects.vercel.app/api/health)
+            https://pme-copilot-six.vercel.app/api/health)
           if [ "$STATUS" != "200" ]; then
             echo "/api/health returned $STATUS"
             exit 1
@@ -111,7 +111,7 @@ jobs:
       - name: Check response time
         run: |
           TIME=$(curl -s -o /dev/null -w "%{time_total}" \
-            pme-copilot-lyv3xj4do-arcadia24s-projects.vercel.app/api/health)
+            https://pme-copilot-six.vercel.app/api/health)
           echo "Response time: ${TIME}s"
           # Alerte si > 2s
           if (( $(echo "$TIME > 2.0" | bc -l) )); then
