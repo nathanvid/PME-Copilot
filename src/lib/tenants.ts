@@ -24,9 +24,7 @@ export function assertTenantId(id: string | undefined): asserts id is string {
  * Retourne null si absent — jamais d'exception ici,
  * c'est à l'appelant de décider quoi faire.
  */
-export function extractTenantId(
-  jwt: Record<string, unknown> | null
-): string | null {
+export function extractTenantId(jwt: Record<string, unknown> | null): string | null {
   if (!jwt) return null
   const id = jwt['tenant_id']
   if (typeof id !== 'string') return null

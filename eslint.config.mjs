@@ -34,7 +34,7 @@ const eslintConfig = defineConfig([
     'build/**',
     'next-env.d.ts',
     'coverage/**',
-    'supabase/**',   // Deno — runtime différent, géré séparément
+    'supabase/**', // Deno — runtime différent, géré séparément
     'node_modules/**',
     'types/**',
   ]),

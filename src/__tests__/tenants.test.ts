@@ -26,9 +26,7 @@ describe('isValidTenantId', () => {
 
 describe('assertTenantId', () => {
   it('ne lève pas d erreur sur un UUID valide', () => {
-    expect(() =>
-      assertTenantId('550e8400-e29b-41d4-a716-446655440000')
-    ).not.toThrow()
+    expect(() => assertTenantId('550e8400-e29b-41d4-a716-446655440000')).not.toThrow()
   })
 
   it('lève une erreur sur undefined', () => {
