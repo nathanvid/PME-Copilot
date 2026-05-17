@@ -1,0 +1,85 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '**.ts'
+      - '**.tsx'
+      - '**.js'
+      - '**.jsx'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD \
+            -- '*.ts' '*.tsx' '*.js' '*.jsx' \
+            ':!*.d.ts' \
+            ':!**/*.test.*' \
+            ':!**/node_modules/**' \
+            > diff.txt
+          
+          # Truncate if too large (Claude context limit safety)
+          wc -l diff.txt
+          head -c 80000 diff.txt > diff_truncated.txt
+
+      - name: Send to Claude API
+        id: claude
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          DIFF_CONTENT=$(cat diff_truncated.txt | python3 -c "
+          import sys, json
+          content = sys.stdin.read()
+          print(json.dumps(content))
+          ")
+          
+          SYSTEM_PROMPT=$(cat .github/workflows/ai-review-prompt.txt | python3 -c \
+            "import sys, json; print(json.dumps(sys.stdin.read()))")
+          
+          RESPONSE=$(curl -s -X POST https://openrouter.ai/api/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+            -d "{
+              \"model\": \"anthropic/claude-sonnet-4.6\",
+              \"max_tokens\": 4096,
+              \"messages\": [
+                {\"role\": \"system\", \"content\": ${SYSTEM_PROMPT}},
+                {\"role\": \"user\", \"content\": \"Review this git diff:\n\n${DIFF_CONTENT}\"}
+              ]
+            }")
+            
+            echo "$RESPONSE" > claude_response.json
+
+      - name: Parse and post comments
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 .github/scripts/post_review_comments.py
+
+      - name: Post summary comment
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 .github/scripts/post_review_summary.py
