@@ -33,7 +33,7 @@ jobs:
             ':!**/*.test.*' \
             ':!**/node_modules/**' \
             > diff.txt
-          
+
           # Truncate if too large (Claude context limit safety)
           wc -l diff.txt
           head -c 80000 diff.txt > diff_truncated.txt
@@ -48,10 +48,10 @@ jobs:
           content = sys.stdin.read()
           print(json.dumps(content))
           ")
-          
+
           SYSTEM_PROMPT=$(cat .github/workflows/ai-review-prompt.txt | python3 -c \
             "import sys, json; print(json.dumps(sys.stdin.read()))")
-          
+
           RESPONSE=$(curl -s -X POST https://openrouter.ai/api/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $OPENROUTER_API_KEY" \
